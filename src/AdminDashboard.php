@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace LiteAdmin;
 
+use LiteAdmin\Metric\AdminMetric;
 use LiteAdmin\Resource\{ResourceManager, ResourceMetadata};
 use LiteAdmin\Security\Csrf;
 use LiteAdmin\UI\HtmlRenderer;
@@ -27,6 +28,8 @@ class AdminDashboard
     private HtmlRenderer $renderer;
     private Csrf $csrf;
     private bool $csrfEnabled = true;
+    /** @var AdminMetric[] */
+    private array $metrics = [];
 
     public function __construct(
         EntityManager $em,
@@ -69,6 +72,20 @@ class AdminDashboard
         return $this;
     }
 
+    public function addMetric(AdminMetric $metric): self
+    {
+        $this->metrics[] = $metric;
+        return $this;
+    }
+
+    /**
+     * @return AdminMetric[]
+     */
+    public function getMetrics(): array
+    {
+        return $this->metrics;
+    }
+
     public function getResourceManager(): ResourceManager
     {
         return $this->resources;
@@ -104,6 +121,30 @@ class AdminDashboard
     public function handleIndex(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
         $resources = $this->resources->getResources();
+
+        if (!empty($this->metrics)) {
+            $metricsHtml = '<div class="metrics-grid">';
+            foreach ($this->metrics as $metric) {
+                $metricsHtml .= $metric->render();
+            }
+            $metricsHtml .= '</div>';
+
+            $content = '<div class="page-header"><h1>Tổng quan hệ thống</h1></div>';
+            $content .= $metricsHtml;
+
+            if (!empty($resources)) {
+                $content .= '<div class="card"><h3 style="margin-bottom: 0.75rem;">Danh mục quản trị</h3><ul style="padding-left: 1.5rem; line-height: 1.8;">';
+                foreach ($resources as $res) {
+                    $content .= "<li><a href=\"{$this->prefix}/{$res->slug}\">{$res->title}</a></li>";
+                }
+                $content .= '</ul></div>';
+            }
+
+            $html = $this->renderer->layout('Bảng điều khiển', $content);
+            $response->getBody()->write($html);
+            return $response->withHeader('Content-Type', 'text/html; charset=UTF-8');
+        }
+
         if (!empty($resources)) {
             $firstSlug = array_key_first($resources);
             return $response->withHeader('Location', "{$this->prefix}/{$firstSlug}")->withStatus(302);

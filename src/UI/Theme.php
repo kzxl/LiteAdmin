@@ -100,6 +100,15 @@ table.data-table tr:hover { background: rgba(0,0,0,0.02); }
 .alert { padding: 0.75rem 1rem; border-radius: var(--radius); margin-bottom: 1rem; font-size: 0.875rem; }
 .alert-success { background: #dcfce7; border: 1px solid #86efac; color: #166534; }
 .alert-danger { background: #fee2e2; border: 1px solid #fca5a5; color: #991b1b; }
+
+/* KPI Metrics */
+.metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem; margin-bottom: 2rem; }
+.metric-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+.metric-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+.metric-label { font-size: 0.875rem; font-weight: 600; color: var(--text-muted); }
+.metric-icon { font-size: 1.25rem; }
+.metric-value { font-size: 1.75rem; font-weight: 700; color: var(--text-main); line-height: 1.2; }
+.metric-desc { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.35rem; }
 CSS;
     }
 }
