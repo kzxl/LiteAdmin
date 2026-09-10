@@ -2,7 +2,28 @@
     "name": "kzxl/lite-admin",
     "description": "Instant declarative Auto-CRUD Admin Dashboard generator for LiteORM, LiteValidate, LiteExport, and LiteAudit in PHP 8.2+",
     "type": "library",
-    "license": "Apache-2.0",
+    "license": "MIT",
+    "homepage": "https://github.com/kzxl/LiteAdmin",
+    "support": {
+        "issues": "https://github.com/kzxl/LiteAdmin/issues",
+        "source": "https://github.com/kzxl/LiteAdmin"
+    },
+    "authors": [
+        {
+            "name": "Phong Vo",
+            "email": "phong.vo@kzxl.com"
+        }
+    ],
+    "keywords": [
+        "admin",
+        "crud",
+        "dashboard",
+        "slim4",
+        "auto-crud",
+        "php82",
+        "dark-mode",
+        "liteorm"
+    ],
     "minimum-stability": "dev",
     "prefer-stable": true,
     "repositories": [
@@ -25,7 +46,7 @@
     ],
     "require": {
         "php": ">=8.2",
-        "kzxl/liteorm": "*",
+        "kzxl/lite-orm": "*",
         "kzxl/lite-validate": "*",
         "kzxl/lite-export": "*",
         "kzxl/lite-audit": "*",

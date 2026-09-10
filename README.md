@@ -1,7 +1,7 @@
 # LiteAdmin
 
 [![PHP 8.2+](https://img.shields.io/badge/php-8.2%2B-blue.svg)](https://www.php.net/)
-[![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)]()
 
 Instant declarative Auto-CRUD Admin Dashboard generator for `LiteORM`, `LiteValidate`, `LiteExport`, and `LiteAudit` in PHP 8.2+. Zero npm, zero node_modules, and zero build step required.
@@ -105,6 +105,14 @@ Visit `/admin` in your browser to immediately access your production-ready manag
 
 ---
 
+## Security Features
+
+- **Stateless HMAC-SHA256 CSRF**: Enforces timing-safe token verification across all mutating actions (POST/DELETE) without session locking.
+- **Mass-Assignment Immunity**: Automatically ignores primary keys and fields marked `readonly: true`.
+- **SQL Injection Prevention**: Column sorting (`sort`) is strictly whitelisted against registered resource columns.
+
+---
+
 ## Testing
 
 ```bash
@@ -117,4 +125,5 @@ Runs test suite using PHPUnit 11 with 100% pass rate.
 
 ## License
 
-Apache-2.0.
+MIT License — see [LICENSE](LICENSE) for details.
+
