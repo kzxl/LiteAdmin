@@ -33,6 +33,11 @@ class TestProduct
     #[AdminColumn(label: 'Còn hàng', format: 'boolean')]
     #[AdminField(label: 'Còn hàng', type: 'checkbox')]
     public bool $inStock = true;
+
+    #[Column(length: 50, nullable: true)]
+    #[AdminColumn(label: 'Mã hệ thống')]
+    #[AdminField(label: 'Mã hệ thống', readonly: true)]
+    public ?string $sysCode = 'SYSTEM_PROTECTED';
 }
 
 final class ResourceManagerTest extends TestCase

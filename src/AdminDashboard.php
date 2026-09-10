@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace LiteAdmin;
 
 use LiteAdmin\Resource\{ResourceManager, ResourceMetadata};
+use LiteAdmin\Security\Csrf;
 use LiteAdmin\UI\HtmlRenderer;
 use LiteAudit\AuditManager;
 use LiteExport\Exporter;
@@ -24,17 +25,37 @@ class AdminDashboard
     private string $prefix;
     private ResourceManager $resources;
     private HtmlRenderer $renderer;
+    private Csrf $csrf;
+    private bool $csrfEnabled = true;
 
     public function __construct(
         EntityManager $em,
         ?AuditManager $auditManager = null,
         string $prefix = '/admin',
+        ?Csrf $csrf = null,
     ) {
         $this->em = $em;
         $this->auditManager = $auditManager;
         $this->prefix = rtrim($prefix, '/');
         $this->resources = new ResourceManager();
         $this->renderer = new HtmlRenderer($this->prefix, []);
+        $this->csrf = $csrf ?? new Csrf();
+    }
+
+    public function setCsrfEnabled(bool $enabled): self
+    {
+        $this->csrfEnabled = $enabled;
+        return $this;
+    }
+
+    public function isCsrfEnabled(): bool
+    {
+        return $this->csrfEnabled;
+    }
+
+    public function getCsrf(): Csrf
+    {
+        return $this->csrf;
     }
 
     /**
@@ -119,9 +140,17 @@ class AdminDashboard
             }
         }
 
+        // Whitelist-based sort column check (SQL Injection & Invalid Column Prevention)
+        $sort = $queryParams['sort'] ?? null;
+        $order = strtoupper((string)($queryParams['order'] ?? 'ASC')) === 'DESC' ? 'DESC' : 'ASC';
+        if ($sort && isset($res->columns[$sort])) {
+            $qb->orderBy($sort, $order);
+        }
+
         $paginator = $qb->paginate($page, $perPage);
 
-        $content = $this->renderer->renderList($res, $paginator, $queryParams);
+        $csrfToken = $this->csrfEnabled ? $this->csrf->generateToken() : null;
+        $content = $this->renderer->renderList($res, $paginator, $queryParams, $csrfToken);
         $html = $this->renderer->layout($res->title, $content, $res->slug);
 
         $response->getBody()->write($html);
@@ -131,7 +160,8 @@ class AdminDashboard
     public function handleCreate(ServerRequestInterface $request, ResponseInterface $response, array $args = []): ResponseInterface
     {
         $res = $this->resolveResource($args['slug'] ?? '');
-        $content = $this->renderer->renderForm($res);
+        $csrfToken = $this->csrfEnabled ? $this->csrf->generateToken() : null;
+        $content = $this->renderer->renderForm($res, csrfToken: $csrfToken);
         $html = $this->renderer->layout("Tạo mới {$res->title}", $content, $res->slug);
 
         $response->getBody()->write($html);
@@ -140,6 +170,10 @@ class AdminDashboard
 
     public function handleStore(ServerRequestInterface $request, ResponseInterface $response, array $args = []): ResponseInterface
     {
+        if ($this->csrfEnabled && !$this->verifyCsrf($request)) {
+            return $this->csrfForbiddenResponse($response);
+        }
+
         $res = $this->resolveResource($args['slug'] ?? '');
         $data = (array)$request->getParsedBody();
 
@@ -148,7 +182,8 @@ class AdminDashboard
         $errors = $this->validateInput($entityClass, $data);
 
         if (!empty($errors)) {
-            $content = $this->renderer->renderForm($res, null, $errors, $data);
+            $csrfToken = $this->csrfEnabled ? $this->csrf->generateToken() : null;
+            $content = $this->renderer->renderForm($res, null, $errors, $data, $csrfToken);
             $html = $this->renderer->layout("Tạo mới {$res->title}", $content, $res->slug, flashError: 'Vui lòng kiểm tra lại các trường dữ liệu.');
             $response->getBody()->write($html);
             return $response->withHeader('Content-Type', 'text/html; charset=UTF-8')->withStatus(422);
@@ -174,7 +209,8 @@ class AdminDashboard
             return $response->withHeader('Location', "{$this->prefix}/{$res->slug}")->withStatus(302);
         }
 
-        $content = $this->renderer->renderForm($res, $entity);
+        $csrfToken = $this->csrfEnabled ? $this->csrf->generateToken() : null;
+        $content = $this->renderer->renderForm($res, $entity, csrfToken: $csrfToken);
         $html = $this->renderer->layout("Chỉnh sửa {$res->title}", $content, $res->slug);
 
         $response->getBody()->write($html);
@@ -183,6 +219,10 @@ class AdminDashboard
 
     public function handleUpdate(ServerRequestInterface $request, ResponseInterface $response, array $args = []): ResponseInterface
     {
+        if ($this->csrfEnabled && !$this->verifyCsrf($request)) {
+            return $this->csrfForbiddenResponse($response);
+        }
+
         $res = $this->resolveResource($args['slug'] ?? '');
         $id = $args['id'] ?? '';
         $entity = $this->em->find($res->entityClass, $id);
@@ -195,7 +235,8 @@ class AdminDashboard
         $errors = $this->validateInput($res->entityClass, $data);
 
         if (!empty($errors)) {
-            $content = $this->renderer->renderForm($res, $entity, $errors, $data);
+            $csrfToken = $this->csrfEnabled ? $this->csrf->generateToken() : null;
+            $content = $this->renderer->renderForm($res, $entity, $errors, $data, $csrfToken);
             $html = $this->renderer->layout("Chỉnh sửa {$res->title}", $content, $res->slug, flashError: 'Vui lòng kiểm tra lại các trường dữ liệu.');
             $response->getBody()->write($html);
             return $response->withHeader('Content-Type', 'text/html; charset=UTF-8')->withStatus(422);
@@ -232,6 +273,10 @@ class AdminDashboard
 
     public function handleDelete(ServerRequestInterface $request, ResponseInterface $response, array $args = []): ResponseInterface
     {
+        if ($this->csrfEnabled && !$this->verifyCsrf($request)) {
+            return $this->csrfForbiddenResponse($response);
+        }
+
         $res = $this->resolveResource($args['slug'] ?? '');
         $id = $args['id'] ?? '';
         $entity = $this->em->find($res->entityClass, $id);
@@ -306,12 +351,33 @@ class AdminDashboard
         return [];
     }
 
+    private function verifyCsrf(ServerRequestInterface $request): bool
+    {
+        $body = (array)$request->getParsedBody();
+        $token = $body['_csrf'] ?? $request->getHeaderLine('X-CSRF-Token');
+        return $this->csrf->validateToken(is_string($token) ? $token : null);
+    }
+
+    private function csrfForbiddenResponse(ResponseInterface $response): ResponseInterface
+    {
+        $html = $this->renderer->layout(
+            '403 Forbidden',
+            '<div class="card" style="border-left: 4px solid var(--danger); padding: 1.5rem;">' .
+            '<h2 style="color: var(--danger); margin-bottom: 0.5rem;">Lỗi bảo mật (CSRF Verification Failed)</h2>' .
+            '<p>Yêu cầu bị từ chối do mã bảo mật CSRF không hợp lệ hoặc đã hết hạn. Vui lòng làm mới trang và thử lại.</p>' .
+            '</div>'
+        );
+        $response->getBody()->write($html);
+        return $response->withHeader('Content-Type', 'text/html; charset=UTF-8')->withStatus(403);
+    }
+
     private function hydrateProperties(object $entity, ResourceMetadata $res, array $data): void
     {
         foreach ($res->fields as $field) {
             $prop = $field['property'];
-            if ($prop === $res->primaryKey) {
-                continue; // Do not overwrite auto-increment PK
+            // Mass assignment protection: skip primary key and readonly properties
+            if ($prop === $res->primaryKey || !empty($field['readonly'])) {
+                continue;
             }
 
             if (array_key_exists($prop, $data)) {

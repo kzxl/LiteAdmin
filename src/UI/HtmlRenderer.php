@@ -76,7 +76,7 @@ HTML;
      *
      * @param array<string, mixed> $queryParams
      */
-    public function renderList(ResourceMetadata $res, Paginator $paginator, array $queryParams = []): string
+    public function renderList(ResourceMetadata $res, Paginator $paginator, array $queryParams = [], ?string $csrfToken = null): string
     {
         $createUrl = "{$this->prefix}/{$res->slug}/create";
         $exportUrl = "{$this->prefix}/{$res->slug}/export";
@@ -129,6 +129,9 @@ HTML;
                 $html .= '<a href="' . $detailUrl . '" class="btn btn-sm btn-outline" style="margin-right: 0.25rem;">Xem</a>';
                 $html .= '<a href="' . $editUrl . '" class="btn btn-sm btn-outline" style="margin-right: 0.25rem;">Sửa</a>';
                 $html .= '<form method="POST" action="' . $deleteUrl . '" style="display: inline;" onsubmit="return confirm(\'Bạn có chắc chắn muốn xóa bản ghi này?\');">';
+                if ($csrfToken) {
+                    $html .= '<input type="hidden" name="_csrf" value="' . htmlspecialchars($csrfToken, ENT_QUOTES) . '">';
+                }
                 $html .= '<button type="submit" class="btn btn-sm btn-danger">Xóa</button>';
                 $html .= '</form>';
                 $html .= '</td></tr>';
@@ -164,7 +167,7 @@ HTML;
      * @param array<string, string> $errors Field validation errors
      * @param array<string, mixed> $old Old input values
      */
-    public function renderForm(ResourceMetadata $res, ?object $entity = null, array $errors = [], array $old = []): string
+    public function renderForm(ResourceMetadata $res, ?object $entity = null, array $errors = [], array $old = [], ?string $csrfToken = null): string
     {
         $isEdit = ($entity !== null);
         $id = $isEdit ? ($entity->{$res->primaryKey} ?? '') : null;
@@ -179,6 +182,9 @@ HTML;
 
         $html .= '<div class="card" style="max-width: 800px;">';
         $html .= '<form method="POST" action="' . $actionUrl . '">';
+        if ($csrfToken) {
+            $html .= '<input type="hidden" name="_csrf" value="' . htmlspecialchars($csrfToken, ENT_QUOTES) . '">';
+        }
 
         foreach ($res->fields as $field) {
             $prop = $field['property'];
