@@ -44,7 +44,7 @@ class HtmlRenderer
 
         return <<<HTML
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -59,7 +59,7 @@ class HtmlRenderer
     <div class="main-wrapper">
         <header class="topbar">
             <strong>{$title}</strong>
-            <span style="font-size: 0.875rem; color: var(--text-muted);">Quản trị hệ thống</span>
+            <span style="font-size: 0.875rem; color: var(--text-muted);">Management Console</span>
         </header>
         <main class="content-body">
             {$flashHtml}
@@ -85,19 +85,19 @@ HTML;
         // Header and Actions
         $html = '<div class="page-header">';
         $html .= '<div><h1>' . htmlspecialchars($res->title) . '</h1>';
-        $html .= '<p style="color: var(--text-muted); font-size: 0.875rem;">Tổng số: ' . $paginator->total . ' bản ghi</p></div>';
+        $html .= '<p style="color: var(--text-muted); font-size: 0.875rem;">Total: ' . $paginator->total . ' records</p></div>';
         $html .= '<div style="display: flex; gap: 0.5rem;">';
-        $html .= '<a href="' . $exportUrl . '" class="btn btn-outline">📥 Xuất Excel</a>';
-        $html .= '<a href="' . $createUrl . '" class="btn btn-primary">+ Thêm mới</a>';
+        $html .= '<a href="' . $exportUrl . '" class="btn btn-outline">📥 Export Excel</a>';
+        $html .= '<a href="' . $createUrl . '" class="btn btn-primary">+ Create New</a>';
         $html .= '</div></div>';
 
         // Search Bar
         $html .= '<div class="card" style="padding: 1rem;">';
         $html .= '<form method="GET" action="' . $this->prefix . '/' . $res->slug . '" style="display: flex; gap: 0.5rem;">';
-        $html .= '<input type="text" name="search" value="' . $currentSearch . '" class="form-control" placeholder="Tìm kiếm nhanh..." style="max-width: 350px;">';
-        $html .= '<button type="submit" class="btn btn-outline">Tìm</button>';
+        $html .= '<input type="text" name="search" value="' . $currentSearch . '" class="form-control" placeholder="Search..." style="max-width: 350px;">';
+        $html .= '<button type="submit" class="btn btn-outline">Search</button>';
         if ($currentSearch !== '') {
-            $html .= '<a href="' . $this->prefix . '/' . $res->slug . '" class="btn btn-outline">Xóa lọc</a>';
+            $html .= '<a href="' . $this->prefix . '/' . $res->slug . '" class="btn btn-outline">Reset</a>';
         }
         $html .= '</form></div>';
 
@@ -106,10 +106,10 @@ HTML;
         foreach ($res->columns as $col) {
             $html .= '<th>' . htmlspecialchars($col['label']) . '</th>';
         }
-        $html .= '<th style="text-align: right;">Thao tác</th></tr></thead><tbody>';
+        $html .= '<th style="text-align: right;">Actions</th></tr></thead><tbody>';
 
         if ($paginator->isEmpty()) {
-            $html .= '<tr><td colspan="' . (count($res->columns) + 1) . '" style="text-align: center; padding: 2rem; color: var(--text-muted);">Không có dữ liệu</td></tr>';
+            $html .= '<tr><td colspan="' . (count($res->columns) + 1) . '" style="text-align: center; padding: 2rem; color: var(--text-muted);">No records found</td></tr>';
         } else {
             foreach ($paginator->items as $item) {
                 $id = $item->{$res->primaryKey} ?? null;
@@ -126,13 +126,13 @@ HTML;
                 $deleteUrl = "{$this->prefix}/{$res->slug}/delete/{$id}";
 
                 $html .= '<td style="text-align: right; white-space: nowrap;">';
-                $html .= '<a href="' . $detailUrl . '" class="btn btn-sm btn-outline" style="margin-right: 0.25rem;">Xem</a>';
-                $html .= '<a href="' . $editUrl . '" class="btn btn-sm btn-outline" style="margin-right: 0.25rem;">Sửa</a>';
-                $html .= '<form method="POST" action="' . $deleteUrl . '" style="display: inline;" onsubmit="return confirm(\'Bạn có chắc chắn muốn xóa bản ghi này?\');">';
+                $html .= '<a href="' . $detailUrl . '" class="btn btn-sm btn-outline" style="margin-right: 0.25rem;">View</a>';
+                $html .= '<a href="' . $editUrl . '" class="btn btn-sm btn-outline" style="margin-right: 0.25rem;">Edit</a>';
+                $html .= '<form method="POST" action="' . $deleteUrl . '" style="display: inline;" onsubmit="return confirm(\'Are you sure you want to delete this record?\');">';
                 if ($csrfToken) {
                     $html .= '<input type="hidden" name="_csrf" value="' . htmlspecialchars($csrfToken, ENT_QUOTES) . '">';
                 }
-                $html .= '<button type="submit" class="btn btn-sm btn-danger">Xóa</button>';
+                $html .= '<button type="submit" class="btn btn-sm btn-danger">Delete</button>';
                 $html .= '</form>';
                 $html .= '</td></tr>';
             }
@@ -143,15 +143,15 @@ HTML;
         // Pagination controls
         if ($paginator->lastPage > 1) {
             $html .= '<div class="pagination">';
-            $html .= '<div>Trang ' . $paginator->currentPage . ' / ' . $paginator->lastPage . '</div>';
+            $html .= '<div>Page ' . $paginator->currentPage . ' of ' . $paginator->lastPage . '</div>';
             $html .= '<div class="nav-links">';
             if ($paginator->currentPage > 1) {
                 $prevUrl = $this->buildPageUrl($res->slug, $paginator->currentPage - 1, $queryParams);
-                $html .= '<a href="' . $prevUrl . '" class="btn btn-sm btn-outline">« Trước</a>';
+                $html .= '<a href="' . $prevUrl . '" class="btn btn-sm btn-outline">« Previous</a>';
             }
             if ($paginator->hasMorePages()) {
                 $nextUrl = $this->buildPageUrl($res->slug, $paginator->currentPage + 1, $queryParams);
-                $html .= '<a href="' . $nextUrl . '" class="btn btn-sm btn-outline">Sau »</a>';
+                $html .= '<a href="' . $nextUrl . '" class="btn btn-sm btn-outline">Next »</a>';
             }
             $html .= '</div></div>';
         }
@@ -171,13 +171,13 @@ HTML;
     {
         $isEdit = ($entity !== null);
         $id = $isEdit ? ($entity->{$res->primaryKey} ?? '') : null;
-        $title = $isEdit ? "Chỉnh sửa {$res->title} #{$id}" : "Tạo mới {$res->title}";
+        $title = $isEdit ? "Edit {$res->title} #{$id}" : "Create {$res->title}";
         $actionUrl = $isEdit ? "{$this->prefix}/{$res->slug}/edit/{$id}" : "{$this->prefix}/{$res->slug}/create";
         $cancelUrl = "{$this->prefix}/{$res->slug}";
 
         $html = '<div class="page-header">';
         $html .= '<h1>' . htmlspecialchars($title) . '</h1>';
-        $html .= '<a href="' . $cancelUrl . '" class="btn btn-outline">Quay lại</a>';
+        $html .= '<a href="' . $cancelUrl . '" class="btn btn-outline">Back</a>';
         $html .= '</div>';
 
         $html .= '<div class="card" style="max-width: 800px;">';
@@ -212,8 +212,8 @@ HTML;
         }
 
         $html .= '<div style="margin-top: 2rem; display: flex; gap: 0.75rem;">';
-        $html .= '<button type="submit" class="btn btn-primary">Lưu bản ghi</button>';
-        $html .= '<a href="' . $cancelUrl . '" class="btn btn-outline">Hủy bỏ</a>';
+        $html .= '<button type="submit" class="btn btn-primary">Save</button>';
+        $html .= '<a href="' . $cancelUrl . '" class="btn btn-outline">Cancel</a>';
         $html .= '</div>';
 
         $html .= '</form></div>';
@@ -229,15 +229,15 @@ HTML;
     public function renderDetail(ResourceMetadata $res, object $entity, array $auditHistory = []): string
     {
         $id = $entity->{$res->primaryKey} ?? '';
-        $title = "Chi tiết {$res->title} #{$id}";
+        $title = "Details for {$res->title} #{$id}";
         $editUrl = "{$this->prefix}/{$res->slug}/edit/{$id}";
         $listUrl = "{$this->prefix}/{$res->slug}";
 
         $html = '<div class="page-header">';
         $html .= '<h1>' . htmlspecialchars($title) . '</h1>';
         $html .= '<div style="display: flex; gap: 0.5rem;">';
-        $html .= '<a href="' . $editUrl . '" class="btn btn-primary">Chỉnh sửa</a>';
-        $html .= '<a href="' . $listUrl . '" class="btn btn-outline">Danh sách</a>';
+        $html .= '<a href="' . $editUrl . '" class="btn btn-primary">Edit</a>';
+        $html .= '<a href="' . $listUrl . '" class="btn btn-outline">Back to List</a>';
         $html .= '</div></div>';
 
         // Details Card
@@ -252,8 +252,8 @@ HTML;
         // Audit Trail Card
         if (!empty($auditHistory)) {
             $html .= '<div class="card">';
-            $html .= '<h3 style="margin-bottom: 1rem;">📜 Lịch sử thay đổi (Audit Trail)</h3>';
-            $html .= '<table class="data-table"><thead><tr><th>Thời gian</th><th>Thao tác</th><th>Người thực hiện</th><th>Nội dung thay đổi</th></tr></thead><tbody>';
+            $html .= '<h3 style="margin-bottom: 1rem;">📜 Audit Trail</h3>';
+            $html .= '<table class="data-table"><thead><tr><th>Timestamp</th><th>Action</th><th>Actor</th><th>Changes</th></tr></thead><tbody>';
             foreach ($auditHistory as $record) {
                 $html .= '<tr>';
                 $html .= '<td>' . $record->timestamp->format('Y-m-d H:i:s') . '</td>';
@@ -263,7 +263,7 @@ HTML;
                     default => 'badge',
                 };
                 $html .= '<td><span class="badge ' . $badgeClass . '">' . strtoupper($record->action->value) . '</span></td>';
-                $html .= '<td>' . htmlspecialchars($record->actorId ?? 'Hệ thống') . '</td>';
+                $html .= '<td>' . htmlspecialchars($record->actorId ?? 'System') . '</td>';
 
                 // Diff summary
                 $diffText = '';
@@ -272,7 +272,7 @@ HTML;
                         . htmlspecialchars((string)($delta['old'] ?? 'null')) . ' ➔ '
                         . htmlspecialchars((string)($delta['new'] ?? 'null')) . '</div>';
                 }
-                $html .= '<td>' . ($diffText ?: '<em>Không có thay đổi trường</em>') . '</td>';
+                $html .= '<td>' . ($diffText ?: '<em>No field changes</em>') . '</td>';
                 $html .= '</tr>';
             }
             $html .= '</tbody></table></div>';
@@ -322,7 +322,7 @@ HTML;
             return $val->format('Y-m-d H:i:s');
         }
         if (is_bool($val) || $format === 'boolean') {
-            return $val ? '<span class="badge badge-success">Có</span>' : '<span class="badge badge-danger">Không</span>';
+            return $val ? '<span class="badge badge-success">Yes</span>' : '<span class="badge badge-danger">No</span>';
         }
 
         return htmlspecialchars((string)$val);

@@ -129,18 +129,18 @@ class AdminDashboard
             }
             $metricsHtml .= '</div>';
 
-            $content = '<div class="page-header"><h1>Tổng quan hệ thống</h1></div>';
+            $content = '<div class="page-header"><h1>System Overview</h1></div>';
             $content .= $metricsHtml;
 
             if (!empty($resources)) {
-                $content .= '<div class="card"><h3 style="margin-bottom: 0.75rem;">Danh mục quản trị</h3><ul style="padding-left: 1.5rem; line-height: 1.8;">';
+                $content .= '<div class="card"><h3 style="margin-bottom: 0.75rem;">Registered Resources</h3><ul style="padding-left: 1.5rem; line-height: 1.8;">';
                 foreach ($resources as $res) {
                     $content .= "<li><a href=\"{$this->prefix}/{$res->slug}\">{$res->title}</a></li>";
                 }
                 $content .= '</ul></div>';
             }
 
-            $html = $this->renderer->layout('Bảng điều khiển', $content);
+            $html = $this->renderer->layout('Dashboard', $content);
             $response->getBody()->write($html);
             return $response->withHeader('Content-Type', 'text/html; charset=UTF-8');
         }
@@ -150,7 +150,7 @@ class AdminDashboard
             return $response->withHeader('Location', "{$this->prefix}/{$firstSlug}")->withStatus(302);
         }
 
-        $html = $this->renderer->layout('Trang quản trị', '<div class="card">Chưa có Resource nào được đăng ký.</div>');
+        $html = $this->renderer->layout('Admin Dashboard', '<div class="card">No resources registered yet.</div>');
         $response->getBody()->write($html);
         return $response->withHeader('Content-Type', 'text/html; charset=UTF-8');
     }
@@ -203,7 +203,7 @@ class AdminDashboard
         $res = $this->resolveResource($args['slug'] ?? '');
         $csrfToken = $this->csrfEnabled ? $this->csrf->generateToken() : null;
         $content = $this->renderer->renderForm($res, csrfToken: $csrfToken);
-        $html = $this->renderer->layout("Tạo mới {$res->title}", $content, $res->slug);
+        $html = $this->renderer->layout("Create {$res->title}", $content, $res->slug);
 
         $response->getBody()->write($html);
         return $response->withHeader('Content-Type', 'text/html; charset=UTF-8');
@@ -225,7 +225,7 @@ class AdminDashboard
         if (!empty($errors)) {
             $csrfToken = $this->csrfEnabled ? $this->csrf->generateToken() : null;
             $content = $this->renderer->renderForm($res, null, $errors, $data, $csrfToken);
-            $html = $this->renderer->layout("Tạo mới {$res->title}", $content, $res->slug, flashError: 'Vui lòng kiểm tra lại các trường dữ liệu.');
+            $html = $this->renderer->layout("Create {$res->title}", $content, $res->slug, flashError: 'Please review the form for errors.');
             $response->getBody()->write($html);
             return $response->withHeader('Content-Type', 'text/html; charset=UTF-8')->withStatus(422);
         }
@@ -252,7 +252,7 @@ class AdminDashboard
 
         $csrfToken = $this->csrfEnabled ? $this->csrf->generateToken() : null;
         $content = $this->renderer->renderForm($res, $entity, csrfToken: $csrfToken);
-        $html = $this->renderer->layout("Chỉnh sửa {$res->title}", $content, $res->slug);
+        $html = $this->renderer->layout("Edit {$res->title}", $content, $res->slug);
 
         $response->getBody()->write($html);
         return $response->withHeader('Content-Type', 'text/html; charset=UTF-8');
@@ -278,7 +278,7 @@ class AdminDashboard
         if (!empty($errors)) {
             $csrfToken = $this->csrfEnabled ? $this->csrf->generateToken() : null;
             $content = $this->renderer->renderForm($res, $entity, $errors, $data, $csrfToken);
-            $html = $this->renderer->layout("Chỉnh sửa {$res->title}", $content, $res->slug, flashError: 'Vui lòng kiểm tra lại các trường dữ liệu.');
+            $html = $this->renderer->layout("Edit {$res->title}", $content, $res->slug, flashError: 'Please review the form for errors.');
             $response->getBody()->write($html);
             return $response->withHeader('Content-Type', 'text/html; charset=UTF-8')->withStatus(422);
         }
@@ -306,7 +306,7 @@ class AdminDashboard
         }
 
         $content = $this->renderer->renderDetail($res, $entity, $auditHistory);
-        $html = $this->renderer->layout("Chi tiết {$res->title} #{$id}", $content, $res->slug);
+        $html = $this->renderer->layout("Details for {$res->title} #{$id}", $content, $res->slug);
 
         $response->getBody()->write($html);
         return $response->withHeader('Content-Type', 'text/html; charset=UTF-8');
@@ -381,7 +381,7 @@ class AdminDashboard
             if ($result->isFailed()) {
                 $flatErrors = [];
                 foreach ($result->getErrors() as $field => $messages) {
-                    $flatErrors[$field] = $messages[0] ?? 'Không hợp lệ';
+                    $flatErrors[$field] = $messages[0] ?? 'Invalid value';
                 }
                 return $flatErrors;
             }
@@ -404,8 +404,8 @@ class AdminDashboard
         $html = $this->renderer->layout(
             '403 Forbidden',
             '<div class="card" style="border-left: 4px solid var(--danger); padding: 1.5rem;">' .
-            '<h2 style="color: var(--danger); margin-bottom: 0.5rem;">Lỗi bảo mật (CSRF Verification Failed)</h2>' .
-            '<p>Yêu cầu bị từ chối do mã bảo mật CSRF không hợp lệ hoặc đã hết hạn. Vui lòng làm mới trang và thử lại.</p>' .
+            '<h2 style="color: var(--danger); margin-bottom: 0.5rem;">Security Error (CSRF Verification Failed)</h2>' .
+            '<p>The request was rejected because the CSRF token is invalid or expired. Please refresh the page and try again.</p>' .
             '</div>'
         );
         $response->getBody()->write($html);

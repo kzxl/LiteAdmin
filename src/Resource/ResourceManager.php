@@ -46,7 +46,7 @@ class ResourceManager
     }
 
     /**
-     * Get resources grouped by section (e.g. ['General' => [...], 'Bán hàng' => [...]])
+     * Get resources grouped by section (e.g. ['General' => [...], 'Shop' => [...]])
      *
      * @return array<string, list<ResourceMetadata>>
      */

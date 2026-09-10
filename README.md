@@ -17,8 +17,8 @@ Instant declarative Auto-CRUD Admin Dashboard generator for `LiteORM`, `LiteVali
 - **Integrated Ecosystem Synergy**:
   - **`LiteORM`**: Powers pagination (`Paginator`), cursor-driven batch streaming, and entity persistence.
   - **`LiteValidate`**: Automatically enforces `#[Required]`, `#[Email]`, etc., rendering inline validation errors with HTTP 422.
-  - **`LiteExport`**: Built-in "📥 Xuất Excel" button streams XLSX spreadsheets directly to the browser with O(1) memory.
-  - **`LiteAudit`**: Detail view displays an integrated chronological change history timeline ("Lịch sử thay đổi") showing field deltas and author tracking.
+  - **`LiteExport`**: Built-in "📥 Export Excel" button streams XLSX spreadsheets directly to the browser with O(1) memory.
+  - **`LiteAudit`**: Detail view displays an integrated chronological change history timeline ("Audit Trail") showing field deltas and author tracking.
 - **Modern Responsive Design**:
   - Embedded CSS stylesheet with automated Dark/Light theme switching (`prefers-color-scheme`).
   - No Webpack, no Vite, and no Node.js runtime required.
@@ -46,7 +46,7 @@ use LiteAudit\Attribute\Auditable;
 #[Entity]
 #[Table('products')]
 #[Auditable(events: ['create', 'update', 'delete'], tag: 'catalog')]
-#[AdminResource(title: 'Sản phẩm', slug: 'products', icon: 'package', group: 'Kinh doanh', order: 1)]
+#[AdminResource(title: 'Products', slug: 'products', icon: 'package', group: 'Sales', order: 1)]
 class Product
 {
     #[Id, AutoIncrement]
@@ -54,19 +54,19 @@ class Product
 
     #[Required]
     #[Column(length: 150)]
-    #[AdminColumn(label: 'Tên sản phẩm', sortable: true, searchable: true)]
-    #[AdminField(label: 'Tên sản phẩm', placeholder: 'Nhập tên sản phẩm...')]
+    #[AdminColumn(label: 'Product Name', sortable: true, searchable: true)]
+    #[AdminField(label: 'Product Name', placeholder: 'Enter product name...')]
     public string $name;
 
     #[Range(min: 0)]
     #[Column]
-    #[AdminColumn(label: 'Đơn giá', format: 'currency')]
-    #[AdminField(label: 'Đơn giá', type: 'number')]
+    #[AdminColumn(label: 'Price', format: 'currency')]
+    #[AdminField(label: 'Price', type: 'number')]
     public float $price;
 
     #[Column(nullable: true)]
-    #[AdminColumn(label: 'Còn hàng', format: 'boolean')]
-    #[AdminField(label: 'Còn hàng', type: 'checkbox')]
+    #[AdminColumn(label: 'In Stock', format: 'boolean')]
+    #[AdminField(label: 'In Stock', type: 'checkbox')]
     public bool $inStock = true;
 }
 ```

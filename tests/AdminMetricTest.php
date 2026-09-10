@@ -14,25 +14,25 @@ final class AdminMetricTest extends TestCase
 {
     public function testMetricCreationAndRendering(): void
     {
-        $metric = AdminMetric::make('Doanh thu tháng', 125000000)
-            ->prefix('₫')
-            ->suffix(' VNĐ')
+        $metric = AdminMetric::make('Monthly Revenue', 125000)
+            ->prefix('$')
+            ->suffix(' USD')
             ->icon('💰')
-            ->description('+15% so với tháng trước');
+            ->description('+15% from last month');
 
-        $this->assertEquals('Doanh thu tháng', $metric->label);
-        $this->assertEquals(125000000, $metric->value);
-        $this->assertEquals('₫', $metric->prefix);
-        $this->assertEquals(' VNĐ', $metric->suffix);
+        $this->assertEquals('Monthly Revenue', $metric->label);
+        $this->assertEquals(125000, $metric->value);
+        $this->assertEquals('$', $metric->prefix);
+        $this->assertEquals(' USD', $metric->suffix);
         $this->assertEquals('💰', $metric->icon);
-        $this->assertEquals('+15% so với tháng trước', $metric->description);
+        $this->assertEquals('+15% from last month', $metric->description);
 
         $html = $metric->render();
         $this->assertStringContainsString('metric-card', $html);
-        $this->assertStringContainsString('Doanh thu tháng', $html);
-        $this->assertStringContainsString('₫125,000,000 VNĐ', $html);
+        $this->assertStringContainsString('Monthly Revenue', $html);
+        $this->assertStringContainsString('$125,000 USD', $html);
         $this->assertStringContainsString('💰', $html);
-        $this->assertStringContainsString('+15% so với tháng trước', $html);
+        $this->assertStringContainsString('+15% from last month', $html);
     }
 
     public function testDashboardRendersMetricsGrid(): void
@@ -40,8 +40,8 @@ final class AdminMetricTest extends TestCase
         $em = new EntityManager('sqlite::memory:');
         $admin = new AdminDashboard($em, null, '/admin');
 
-        $m1 = AdminMetric::make('Khách hàng mới', 450)->icon('👥');
-        $m2 = AdminMetric::make('Đơn hàng chờ xử lý', 12)->icon('📦');
+        $m1 = AdminMetric::make('New Customers', 450)->icon('👥');
+        $m2 = AdminMetric::make('Pending Orders', 12)->icon('📦');
 
         $admin->addMetric($m1)->addMetric($m2);
 
@@ -54,9 +54,9 @@ final class AdminMetricTest extends TestCase
         $body = (string)$response->getBody();
 
         $this->assertStringContainsString('metrics-grid', $body);
-        $this->assertStringContainsString('Khách hàng mới', $body);
+        $this->assertStringContainsString('New Customers', $body);
         $this->assertStringContainsString('450', $body);
-        $this->assertStringContainsString('Đơn hàng chờ xử lý', $body);
+        $this->assertStringContainsString('Pending Orders', $body);
         $this->assertStringContainsString('12', $body);
     }
 }

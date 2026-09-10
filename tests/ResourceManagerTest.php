@@ -12,7 +12,7 @@ use PHPUnit\Framework\TestCase;
 
 #[Entity]
 #[Table('products')]
-#[AdminResource(title: 'Sản phẩm', slug: 'products', icon: 'package', group: 'Kinh doanh', order: 1)]
+#[AdminResource(title: 'Products', slug: 'products', icon: 'package', group: 'Sales', order: 1)]
 class TestProduct
 {
     #[Id, AutoIncrement]
@@ -20,23 +20,23 @@ class TestProduct
 
     #[Required]
     #[Column(length: 150)]
-    #[AdminColumn(label: 'Tên sản phẩm', sortable: true, searchable: true)]
-    #[AdminField(label: 'Tên sản phẩm', placeholder: 'Nhập tên...')]
+    #[AdminColumn(label: 'Product Name', sortable: true, searchable: true)]
+    #[AdminField(label: 'Product Name', placeholder: 'Enter name...')]
     public string $name;
 
     #[Column]
-    #[AdminColumn(label: 'Giá tiền', format: 'currency')]
-    #[AdminField(label: 'Giá tiền', type: 'number')]
+    #[AdminColumn(label: 'Price', format: 'currency')]
+    #[AdminField(label: 'Price', type: 'number')]
     public float $price;
 
     #[Column(nullable: true)]
-    #[AdminColumn(label: 'Còn hàng', format: 'boolean')]
-    #[AdminField(label: 'Còn hàng', type: 'checkbox')]
+    #[AdminColumn(label: 'In Stock', format: 'boolean')]
+    #[AdminField(label: 'In Stock', type: 'checkbox')]
     public bool $inStock = true;
 
     #[Column(length: 50, nullable: true)]
-    #[AdminColumn(label: 'Mã hệ thống')]
-    #[AdminField(label: 'Mã hệ thống', readonly: true)]
+    #[AdminColumn(label: 'System Code')]
+    #[AdminField(label: 'System Code', readonly: true)]
     public ?string $sysCode = 'SYSTEM_PROTECTED';
 }
 
@@ -49,15 +49,15 @@ final class ResourceManagerTest extends TestCase
 
         $res = $manager->getResource('products');
         $this->assertNotNull($res);
-        $this->assertEquals('Sản phẩm', $res->title);
+        $this->assertEquals('Products', $res->title);
         $this->assertEquals('products', $res->slug);
-        $this->assertEquals('Kinh doanh', $res->group);
+        $this->assertEquals('Sales', $res->group);
         $this->assertEquals('products', $res->tableName);
         $this->assertEquals('id', $res->primaryKey);
 
         // Columns
         $this->assertArrayHasKey('name', $res->columns);
-        $this->assertEquals('Tên sản phẩm', $res->columns['name']['label']);
+        $this->assertEquals('Product Name', $res->columns['name']['label']);
         $this->assertTrue($res->columns['name']['searchable']);
         $this->assertEquals('currency', $res->columns['price']['format']);
 
@@ -69,7 +69,7 @@ final class ResourceManagerTest extends TestCase
 
         // Groups
         $groups = $manager->getResourcesByGroup();
-        $this->assertArrayHasKey('Kinh doanh', $groups);
-        $this->assertCount(1, $groups['Kinh doanh']);
+        $this->assertArrayHasKey('Sales', $groups);
+        $this->assertCount(1, $groups['Sales']);
     }
 }

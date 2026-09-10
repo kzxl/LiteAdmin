@@ -10,7 +10,7 @@ use Attribute;
  * Marks an entity as manageable via the LiteAdmin dashboard.
  *
  * Example:
- *   #[AdminResource(title: 'Sản phẩm', icon: 'package', group: 'Bán hàng')]
+ *   #[AdminResource(title: 'Products', icon: 'package', group: 'Shop')]
  *   class Product { ... }
  */
 #[Attribute(Attribute::TARGET_CLASS)]

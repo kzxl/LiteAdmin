@@ -65,10 +65,10 @@ final class AdminDashboardTest extends TestCase
 
         $this->assertEquals(200, $res->getStatusCode());
         $body = (string)$res->getBody();
-        $this->assertStringContainsString('Sản phẩm', $body);
+        $this->assertStringContainsString('Products', $body);
         $this->assertStringContainsString('Laptop Pro', $body);
         $this->assertStringContainsString('Wireless Mouse', $body);
-        $this->assertStringContainsString('Tổng số: 2 bản ghi', $body);
+        $this->assertStringContainsString('Total: 2 records', $body);
         $this->assertStringContainsString('name="_csrf"', $body);
     }
 
@@ -103,7 +103,7 @@ final class AdminDashboardTest extends TestCase
             ->withParsedBody(['name' => 'Attack Item', 'price' => '10.0']);
         $resStore = $this->admin->handleStore($reqStoreNoCsrf, new Response(), ['slug' => 'products']);
         $this->assertEquals(403, $resStore->getStatusCode());
-        $this->assertStringContainsString('Lỗi bảo mật (CSRF Verification Failed)', (string)$resStore->getBody());
+        $this->assertStringContainsString('Security Error (CSRF Verification Failed)', (string)$resStore->getBody());
 
         // 2. Update without CSRF -> 403 Forbidden
         $reqUpdateNoCsrf = (new ServerRequest('POST', '/admin/products/edit/1'))
@@ -132,7 +132,7 @@ final class AdminDashboardTest extends TestCase
             ['slug' => 'products']
         );
         $this->assertEquals(200, $resForm->getStatusCode());
-        $this->assertStringContainsString('Tạo mới Sản phẩm', (string)$resForm->getBody());
+        $this->assertStringContainsString('Create Products', (string)$resForm->getBody());
         $this->assertStringContainsString('name="_csrf"', (string)$resForm->getBody());
 
         // 2. Store valid product with valid CSRF token and attempt Mass-Assignment attack on sysCode
@@ -171,7 +171,7 @@ final class AdminDashboardTest extends TestCase
         $resStore = $this->admin->handleStore($reqStore, new Response(), ['slug' => 'products']);
         $this->assertEquals(422, $resStore->getStatusCode());
         $body = (string)$resStore->getBody();
-        $this->assertStringContainsString('Vui lòng kiểm tra lại', $body);
+        $this->assertStringContainsString('Please review the form for errors.', $body);
         $this->assertStringContainsString('name="_csrf"', $body); // CSRF token re-injected in form
     }
 
@@ -215,9 +215,9 @@ final class AdminDashboardTest extends TestCase
 
         $this->assertEquals(200, $resDetail->getStatusCode());
         $body = (string)$resDetail->getBody();
-        $this->assertStringContainsString('Chi tiết Sản phẩm #' . $id, $body);
+        $this->assertStringContainsString('Details for Products #' . $id, $body);
         $this->assertStringContainsString('Gaming Monitor Ultra', $body);
-        $this->assertStringContainsString('Lịch sử thay đổi (Audit Trail)', $body);
+        $this->assertStringContainsString('Audit Trail', $body);
         $this->assertStringContainsString('admin_user', $body);
     }
 
