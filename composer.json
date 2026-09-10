@@ -1,0 +1,54 @@
+{
+    "name": "kzxl/lite-admin",
+    "description": "Instant declarative Auto-CRUD Admin Dashboard generator for LiteORM, LiteValidate, LiteExport, and LiteAudit in PHP 8.2+",
+    "type": "library",
+    "license": "Apache-2.0",
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../LiteORM"
+        },
+        {
+            "type": "path",
+            "url": "../LiteValidate"
+        },
+        {
+            "type": "path",
+            "url": "../LiteExport"
+        },
+        {
+            "type": "path",
+            "url": "../LiteAudit"
+        }
+    ],
+    "require": {
+        "php": ">=8.2",
+        "kzxl/liteorm": "*",
+        "kzxl/lite-validate": "*",
+        "kzxl/lite-export": "*",
+        "kzxl/lite-audit": "*",
+        "psr/http-message": "^1.0 || ^2.0",
+        "psr/http-server-middleware": "^1.0",
+        "psr/http-server-handler": "^1.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^11.0",
+        "slim/slim": "^4.14",
+        "nyholm/psr7": "^1.8"
+    },
+    "autoload": {
+        "psr-4": {
+            "LiteAdmin\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "LiteAdmin\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "phpunit --colors=always"
+    }
+}
