@@ -23,6 +23,9 @@ Instant declarative Auto-CRUD Admin Dashboard generator for `LiteORM`, `LiteVali
   - **`LiteValidate`**: Automatically enforces `#[Required]`, `#[Email]`, etc., rendering inline validation errors with HTTP 422.
   - **`LiteExport`**: Built-in "📥 Export Excel" button streams XLSX spreadsheets directly to the browser with O(1) memory.
   - **`LiteAudit`**: Detail view displays an integrated chronological change history timeline ("Audit Trail") showing field deltas and author tracking.
+- **RBAC & Action-Level Permission Guard**:
+  - Declaratively protect resources using `#[Authorize(roles: ['admin', 'manager'])]` or granular action gates `#[Authorize(permissions: ['catalog.delete'], action: 'delete')]`.
+  - Built-in `PermissionGate` with superadmin bypass, fail-closed security, and pluggable user resolver.
 - **Modern Responsive Design**:
   - Embedded CSS stylesheet with automated Dark/Light theme switching (`prefers-color-scheme`).
   - No Webpack, no Vite, and no Node.js runtime required.
@@ -84,7 +87,7 @@ For local development where changes should reflect immediately via symlink:
 ### 1. Annotate Your Entity
 
 ```php
-use LiteAdmin\Attribute\{AdminResource, AdminColumn, AdminField};
+use LiteAdmin\Attribute\{AdminResource, AdminColumn, AdminField, Authorize};
 use LiteORM\Attribute\{Entity, Table, Id, AutoIncrement, Column};
 use LiteValidate\Attribute\{Required, Range};
 use LiteAudit\Attribute\Auditable;
@@ -93,6 +96,8 @@ use LiteAudit\Attribute\Auditable;
 #[Table('products')]
 #[Auditable(events: ['create', 'update', 'delete'], tag: 'catalog')]
 #[AdminResource(title: 'Products', slug: 'products', icon: 'package', group: 'Sales', order: 1)]
+#[Authorize(roles: ['manager', 'admin'], action: 'create')]
+#[Authorize(permissions: ['catalog.delete'], action: 'delete')]
 class Product
 {
     #[Id, AutoIncrement]
@@ -136,8 +141,16 @@ $auditStorage->createSchemaIfNotExists();
 $auditManager = new AuditManager($auditStorage);
 LiteOrmAuditBridge::register($em, $auditManager);
 
-// 2. Setup LiteAdmin
+// 2. Setup LiteAdmin & User Security Context
 $admin = new AdminDashboard($em, $auditManager, '/admin');
+$admin->setUserResolver(function ($request): array {
+    // Extract current authenticated user roles & permissions from session/JWT
+    return [
+        'roles' => $request->getAttribute('user_roles', ['manager']),
+        'permissions' => $request->getAttribute('user_permissions', ['catalog.read', 'catalog.write']),
+    ];
+});
+
 $admin->register(Product::class);
 $admin->register(User::class);
 
@@ -153,6 +166,7 @@ Visit `/admin` in your browser to immediately access your production-ready manag
 
 ## Security Features
 
+- **RBAC & Permission Guard**: Enforces granular resource and action-level authorization (`view`, `create`, `update`, `delete`, `export`) with `#[Authorize]` attributes and fail-closed defense.
 - **Stateless HMAC-SHA256 CSRF**: Enforces timing-safe token verification across all mutating actions (POST/DELETE) without session locking.
 - **Mass-Assignment Immunity**: Automatically ignores primary keys and fields marked `readonly: true`.
 - **SQL Injection Prevention**: Column sorting (`sort`) is strictly whitelisted against registered resource columns.

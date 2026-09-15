@@ -22,7 +22,10 @@
         "auto-crud",
         "php82",
         "dark-mode",
-        "liteorm"
+        "liteorm",
+        "rbac",
+        "authorization",
+        "security"
     ],
     "minimum-stability": "dev",
     "prefer-stable": true,

@@ -6,7 +6,7 @@ namespace LiteAdmin;
 
 use LiteAdmin\Metric\AdminMetric;
 use LiteAdmin\Resource\{ResourceManager, ResourceMetadata};
-use LiteAdmin\Security\Csrf;
+use LiteAdmin\Security\{Csrf, PermissionGate};
 use LiteAdmin\UI\HtmlRenderer;
 use LiteAudit\AuditManager;
 use LiteExport\Exporter;
@@ -28,6 +28,7 @@ class AdminDashboard
     private HtmlRenderer $renderer;
     private Csrf $csrf;
     private bool $csrfEnabled = true;
+    private PermissionGate $gate;
     /** @var AdminMetric[] */
     private array $metrics = [];
 
@@ -36,6 +37,7 @@ class AdminDashboard
         ?AuditManager $auditManager = null,
         string $prefix = '/admin',
         ?Csrf $csrf = null,
+        ?PermissionGate $gate = null,
     ) {
         $this->em = $em;
         $this->auditManager = $auditManager;
@@ -43,6 +45,7 @@ class AdminDashboard
         $this->resources = new ResourceManager();
         $this->renderer = new HtmlRenderer($this->prefix, []);
         $this->csrf = $csrf ?? new Csrf();
+        $this->gate = $gate ?? new PermissionGate();
     }
 
     public function setCsrfEnabled(bool $enabled): self
@@ -59,6 +62,23 @@ class AdminDashboard
     public function getCsrf(): Csrf
     {
         return $this->csrf;
+    }
+
+    public function getPermissionGate(): PermissionGate
+    {
+        return $this->gate;
+    }
+
+    public function setPermissionGate(PermissionGate $gate): self
+    {
+        $this->gate = $gate;
+        return $this;
+    }
+
+    public function setUserResolver(callable $resolver): self
+    {
+        $this->gate->setUserResolver($resolver);
+        return $this;
     }
 
     /**
@@ -120,7 +140,8 @@ class AdminDashboard
 
     public function handleIndex(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
-        $resources = $this->resources->getResources();
+        $allResources = $this->resources->getResources();
+        $resources = array_filter($allResources, fn($res) => $this->gate->can($request, $res->entityClass, 'view'));
 
         if (!empty($this->metrics)) {
             $metricsHtml = '<div class="metrics-grid">';
@@ -159,6 +180,11 @@ class AdminDashboard
     {
         $slug = $args['slug'] ?? '';
         $res = $this->resolveResource($slug);
+
+        if (!$this->gate->can($request, $res->entityClass, 'view')) {
+            return $this->forbiddenResponse($response, 'You do not have permission to view this resource.');
+        }
+
         $queryParams = $request->getQueryParams();
 
         $page = max(1, (int)($queryParams['page'] ?? 1));
@@ -201,6 +227,11 @@ class AdminDashboard
     public function handleCreate(ServerRequestInterface $request, ResponseInterface $response, array $args = []): ResponseInterface
     {
         $res = $this->resolveResource($args['slug'] ?? '');
+
+        if (!$this->gate->can($request, $res->entityClass, 'create')) {
+            return $this->forbiddenResponse($response, 'You do not have permission to create this resource.');
+        }
+
         $csrfToken = $this->csrfEnabled ? $this->csrf->generateToken() : null;
         $content = $this->renderer->renderForm($res, csrfToken: $csrfToken);
         $html = $this->renderer->layout("Create {$res->title}", $content, $res->slug);
@@ -216,6 +247,11 @@ class AdminDashboard
         }
 
         $res = $this->resolveResource($args['slug'] ?? '');
+
+        if (!$this->gate->can($request, $res->entityClass, 'create')) {
+            return $this->forbiddenResponse($response, 'You do not have permission to create this resource.');
+        }
+
         $data = (array)$request->getParsedBody();
 
         // 1. Validate using LiteValidate if entity has attributes
@@ -243,6 +279,11 @@ class AdminDashboard
     public function handleEdit(ServerRequestInterface $request, ResponseInterface $response, array $args = []): ResponseInterface
     {
         $res = $this->resolveResource($args['slug'] ?? '');
+
+        if (!$this->gate->can($request, $res->entityClass, 'update')) {
+            return $this->forbiddenResponse($response, 'You do not have permission to edit this resource.');
+        }
+
         $id = $args['id'] ?? '';
         $entity = $this->em->find($res->entityClass, $id);
 
@@ -265,6 +306,11 @@ class AdminDashboard
         }
 
         $res = $this->resolveResource($args['slug'] ?? '');
+
+        if (!$this->gate->can($request, $res->entityClass, 'update')) {
+            return $this->forbiddenResponse($response, 'You do not have permission to update this resource.');
+        }
+
         $id = $args['id'] ?? '';
         $entity = $this->em->find($res->entityClass, $id);
 
@@ -292,6 +338,11 @@ class AdminDashboard
     public function handleDetail(ServerRequestInterface $request, ResponseInterface $response, array $args = []): ResponseInterface
     {
         $res = $this->resolveResource($args['slug'] ?? '');
+
+        if (!$this->gate->can($request, $res->entityClass, 'view')) {
+            return $this->forbiddenResponse($response, 'You do not have permission to view details of this resource.');
+        }
+
         $id = $args['id'] ?? '';
         $entity = $this->em->find($res->entityClass, $id);
 
@@ -319,6 +370,11 @@ class AdminDashboard
         }
 
         $res = $this->resolveResource($args['slug'] ?? '');
+
+        if (!$this->gate->can($request, $res->entityClass, 'delete')) {
+            return $this->forbiddenResponse($response, 'You do not have permission to delete this resource.');
+        }
+
         $id = $args['id'] ?? '';
         $entity = $this->em->find($res->entityClass, $id);
 
@@ -333,6 +389,10 @@ class AdminDashboard
     public function handleExport(ServerRequestInterface $request, ResponseInterface $response, array $args = []): ResponseInterface
     {
         $res = $this->resolveResource($args['slug'] ?? '');
+
+        if (!$this->gate->can($request, $res->entityClass, 'export')) {
+            return $this->forbiddenResponse($response, 'You do not have permission to export this resource.');
+        }
 
         // Stream all entities via LiteORM cursor generator
         $cursor = $this->em->query($res->entityClass)->cursor();
@@ -406,6 +466,19 @@ class AdminDashboard
             '<div class="card" style="border-left: 4px solid var(--danger); padding: 1.5rem;">' .
             '<h2 style="color: var(--danger); margin-bottom: 0.5rem;">Security Error (CSRF Verification Failed)</h2>' .
             '<p>The request was rejected because the CSRF token is invalid or expired. Please refresh the page and try again.</p>' .
+            '</div>'
+        );
+        $response->getBody()->write($html);
+        return $response->withHeader('Content-Type', 'text/html; charset=UTF-8')->withStatus(403);
+    }
+
+    private function forbiddenResponse(ResponseInterface $response, string $message = 'You do not have permission to access this resource.'): ResponseInterface
+    {
+        $html = $this->renderer->layout(
+            '403 Forbidden',
+            '<div class="card" style="border-left: 4px solid var(--danger); padding: 1.5rem;">' .
+            '<h2 style="color: var(--danger); margin-bottom: 0.5rem;">Access Denied (403 Forbidden)</h2>' .
+            '<p>' . htmlspecialchars($message, ENT_QUOTES, 'UTF-8') . '</p>' .
             '</div>'
         );
         $response->getBody()->write($html);
