@@ -1,5 +1,9 @@
 # LiteAdmin
 
+[![Latest Version](https://img.shields.io/github/v/release/kzxl/LiteAdmin?label=version&color=blue)](https://github.com/kzxl/LiteAdmin/releases)
+[![PHP Version](https://img.shields.io/badge/php-%3E%3D8.2-8892BF.svg)](https://php.net)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
 [![PHP 8.2+](https://img.shields.io/badge/php-8.2%2B-blue.svg)](https://www.php.net/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)]()
@@ -25,10 +29,52 @@ Instant declarative Auto-CRUD Admin Dashboard generator for `LiteORM`, `LiteVali
 
 ---
 
-## Installation
+## 📦 Installation
 
+### Option 1: Standard Composer (via Packagist)
 ```bash
 composer require kzxl/lite-admin
+```
+
+### Option 2: Direct from Git Repository (VCS)
+To pull directly from the official GitHub repository without waiting for Packagist synchronization, add the VCS repository to your project's `composer.json`:
+
+```json
+{
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/kzxl/LiteAdmin.git"
+        }
+    ],
+    "require": {
+        "kzxl/lite-admin": "^1.1.0"
+    }
+}
+```
+Or configure via CLI:
+```bash
+composer config repositories.lite-admin vcs https://github.com/kzxl/LiteAdmin.git
+composer require kzxl/lite-admin:^1.1.0
+```
+
+### Option 3: Local Path Repository (Monorepo / Development)
+For local development where changes should reflect immediately via symlink:
+```json
+{
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../libs/LiteAdmin",
+            "options": {
+                "symlink": true
+            }
+        }
+    ],
+    "require": {
+        "kzxl/lite-admin": "@dev"
+    }
+}
 ```
 
 ---
